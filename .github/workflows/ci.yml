@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [ "qa", "main" ]
+  push:
+    branches: [ "qa", "main" ]
+
+jobs:
+  repo-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Required notebooks exist
+        run: |
+          test -f notebooks/01_bronze_ingest || (echo "Missing notebooks/01_bronze_ingest" && exit 1)
+          test -f notebooks/02_staging_prepare_sql || (echo "Missing notebooks/02_staging_prepare_sql" && exit 1)
+          test -f notebooks/03_silver_scd2_merge_sql || (echo "Missing notebooks/03_silver_scd2_merge_sql" && exit 1)
+          test -f notebooks/04_gold_views_and_kpis_sql || (echo "Missing notebooks/04_gold_views_and_kpis_sql" && exit 1)
+          test -f notebooks/05_data_quality_checks_sql || (echo "Missing notebooks/05_data_quality_checks_sql" && exit 1)
+
+      - name: Guardrail - prevent hardcoded env catalogs in notebooks
+        run: |
+          ! grep -R -n "etl_demo_dev\." notebooks/ || (echo "Hardcoded etl_demo_dev found" && exit 1)
+          ! grep -R -n "etl_demo_qa\."  notebooks/ || (echo "Hardcoded etl_demo_qa found" && exit 1)
+          ! grep -R -n "etl_demo_prod\." notebooks/ || (echo "Hardcoded etl_demo_prod found" && exit 1)
