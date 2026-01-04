@@ -1,0 +1,50 @@
+name: cd
+
+on:
+  push:
+    branches: [ "qa", "main" ]
+
+jobs:
+  trigger-databricks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Decide environment
+        id: vars
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "qa" ]; then
+            echo "ENV=qa" >> $GITHUB_OUTPUT
+            echo "CATALOG=etl_demo_qa" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=prod" >> $GITHUB_OUTPUT
+            echo "CATALOG=etl_demo_prod" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger Databricks run (Jobs submit API)
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          DATABRICKS_CLUSTER_ID: ${{ secrets.DATABRICKS_CLUSTER_ID }}
+        run: |
+          NOTEBOOK_PATH="${{ secrets.DATABRICKS_RUNNER_NOTEBOOK_PATH }}"
+
+          payload=$(cat << JSON
+          {
+            "run_name": "github-cd-\${{ steps.vars.outputs.ENV }}",
+            "existing_cluster_id": "${DATABRICKS_CLUSTER_ID}",
+            "notebook_task": {
+              "notebook_path": "${NOTEBOOK_PATH}",
+              "base_parameters": {
+                "env": "${{ steps.vars.outputs.ENV }}",
+                "catalog": "${{ steps.vars.outputs.CATALOG }}"
+              }
+            }
+          }
+JSON
+          )
+
+          curl -sS -X POST \
+            "${DATABRICKS_HOST}/api/2.1/jobs/runs/submit" \
+            -H "Authorization: Bearer ${DATABRICKS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "${payload}"
