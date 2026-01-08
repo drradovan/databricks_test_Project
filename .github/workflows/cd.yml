@@ -25,26 +25,28 @@ jobs:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
           DATABRICKS_CLUSTER_ID: ${{ secrets.DATABRICKS_CLUSTER_ID }}
+          NOTEBOOK_PATH: ${{ secrets.DATABRICKS_RUNNER_NOTEBOOK_PATH }}
+          ENV_NAME: ${{ steps.vars.outputs.ENV }}
+          CATALOG_NAME: ${{ steps.vars.outputs.CATALOG }}
         run: |
-          NOTEBOOK_PATH="${{ secrets.DATABRICKS_RUNNER_NOTEBOOK_PATH }}"
-
-          payload=$(cat << JSON
-          {
-            "run_name": "github-cd-\${{ steps.vars.outputs.ENV }}",
-            "existing_cluster_id": "${DATABRICKS_CLUSTER_ID}",
+          payload='{
+            "run_name": "github-cd-'"$ENV_NAME"'",
+            "existing_cluster_id": "'"$DATABRICKS_CLUSTER_ID"'",
             "notebook_task": {
-              "notebook_path": "${NOTEBOOK_PATH}",
+              "notebook_path": "'"$NOTEBOOK_PATH"'",
               "base_parameters": {
-                "env": "${{ steps.vars.outputs.ENV }}",
-                "catalog": "${{ steps.vars.outputs.CATALOG }}"
+                "env": "'"$ENV_NAME"'",
+                "catalog": "'"$CATALOG_NAME"'"
               }
             }
-          }
-JSON
-          )
+          }'
+
+          echo "Submitting run to: $DATABRICKS_HOST"
+          echo "Catalog: $CATALOG_NAME | Env: $ENV_NAME"
+          echo "Notebook: $NOTEBOOK_PATH"
 
           curl -sS -X POST \
-            "${DATABRICKS_HOST}/api/2.1/jobs/runs/submit" \
-            -H "Authorization: Bearer ${DATABRICKS_TOKEN}" \
+            "$DATABRICKS_HOST/api/2.1/jobs/runs/submit" \
+            -H "Authorization: Bearer $DATABRICKS_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "${payload}"
+            -d "$payload"
