@@ -14,11 +14,11 @@ jobs:
 
       - name: Required notebooks exist
         run: |
-          test -f notebooks/01_bronze_ingest || (echo "Missing notebooks/01_bronze_ingest" && exit 1)
-          test -f notebooks/02_staging_prepare_sql || (echo "Missing notebooks/02_staging_prepare_sql" && exit 1)
-          test -f notebooks/03_silver_scd2_merge_sql || (echo "Missing notebooks/03_silver_scd2_merge_sql" && exit 1)
-          test -f notebooks/04_gold_views_and_kpis_sql || (echo "Missing notebooks/04_gold_views_and_kpis_sql" && exit 1)
-          test -f notebooks/05_data_quality_checks_sql || (echo "Missing notebooks/05_data_quality_checks_sql" && exit 1)
+          test -f notebooks/01_bronze_ingest.ipynb || (echo "Missing notebooks/01_bronze_ingest.ipynb" && exit 1)
+          test -f notebooks/02_staging_prepare_sql.ipynb || (echo "Missing notebooks/02_staging_prepare_sql.ipynb" && exit 1)
+          test -f notebooks/03_silver_scd2_merge_sql.ipynb || (echo "Missing notebooks/03_silver_scd2_merge_sql.ipynb" && exit 1)
+          test -f notebooks/04_gold_views_and_kpis_sql.ipynb || (echo "Missing notebooks/04_gold_views_and_kpis_sql.ipynb" && exit 1)
+          test -f notebooks/05_data_quality_checks_sql.ipynb || (echo "Missing notebooks/05_data_quality_checks_sql.ipynb" && exit 1)
 
       - name: Guardrail - prevent hardcoded env catalogs in notebooks
         run: |
